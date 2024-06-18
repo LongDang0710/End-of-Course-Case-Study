@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, colorchooser, font
-from tkinter import messagebox
+from tkinter import ttk, colorchooser, font, messagebox
 import sqlite3
 
 class LibraryManagementSystem:
@@ -14,13 +13,17 @@ class LibraryManagementSystem:
         self.cursor = self.conn.cursor()
         self.create_tables()
 
-        # Tạo thanh công cụ và thêm các nút Save As và Reset All
+        # Tạo thanh công cụ và thêm nút File với menu con
         toolbar = tk.Frame(self.root, bd=1, relief=tk.RAISED)
-        save_as_button = tk.Button(toolbar, text="Save as", command=self.open_save_as_window)
-        save_as_button.pack(side=tk.LEFT, padx=2, pady=2)
-        reset_all_button = tk.Button(toolbar, text="Reset All", command=self.confirm_reset_all)
-        reset_all_button.pack(side=tk.LEFT, padx=2, pady=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
+
+        # Nút File với menu con
+        file_button = tk.Menubutton(toolbar, text="File", relief=tk.RAISED)
+        file_button.pack(side=tk.LEFT, padx=2, pady=2)
+        file_menu = tk.Menu(file_button, tearoff=0)
+        file_menu.add_command(label="Save As", command=self.open_save_as_window)
+        file_menu.add_command(label="Reset All", command=self.reset_all)
+        file_button.config(menu=file_menu)
 
         # Tạo notebook (giao diện tab)
         self.notebook = ttk.Notebook(self.root)
@@ -41,7 +44,7 @@ class LibraryManagementSystem:
         self.books_tree = self.create_tree_view(self.books_tab, ["Title", "Author", "Genre", "Quantity", "Available"])
         self.create_book_form(self.books_tab)
         self.load_books()
-        tk.Button(self.books_tab, text="Reset Books", command=self.confirm_reset_books).pack(pady=10)
+        tk.Button(self.books_tab, text="Reset Books", command=self.reset_books).pack(pady=10)
 
         # Setup thông tin tab Members
         self.members_tree = self.create_tree_view(self.members_tab,
@@ -49,7 +52,7 @@ class LibraryManagementSystem:
                                                    "Quantity Borrowed"])
         self.create_member_form(self.members_tab)
         self.load_members()
-        tk.Button(self.members_tab, text="Reset Members", command=self.confirm_reset_members).pack(pady=10)
+        tk.Button(self.members_tab, text="Reset Members", command=self.reset_members).pack(pady=10)
 
         # Setup thông tin tab Transactions
         self.transactions_tree = self.create_tree_view(self.transactions_tab,
@@ -57,97 +60,59 @@ class LibraryManagementSystem:
                                                         "Return Date"])
         self.create_transaction_form(self.transactions_tab)
         self.load_transactions()
-        tk.Button(self.transactions_tab, text="Reset Transactions", command=self.confirm_reset_transactions).pack(pady=10)
+        tk.Button(self.transactions_tab, text="Reset Transactions", command=self.reset_transactions).pack(pady=10)
 
         # Setup thông tin tab Settings
         self.create_settings_form(self.settings_tab)
 
-    # Xác nhận reset tất cả
-    def confirm_reset_all(self):
-        if messagebox.askyesno("Warning", "This action will reset everything to default and cannot be undone. Do you want to proceed?"):
-            self.reset_all()
-
     # Tạo tính năng Reset All
     def reset_all(self):
-        self.reset_books(confirm=False)
-        self.reset_members(confirm=False)
-        self.reset_transactions(confirm=False)
-        self.reset_settings(confirm=False)
-        messagebox.showinfo("Warning", "Reset Successfully!")
-
-    # Xác nhận reset dữ liệu sách
-    def confirm_reset_books(self):
-        if messagebox.askyesno("Warning",
-                               "This action will delete all book's data. Do you want to proceed?"):
-            self.reset_books()
+        if messagebox.askyesno("Warning", "This action will reset everything to default and cannot be undone. Do you want to proceed?"):
+            self.reset_books(confirm=False)
+            self.reset_members(confirm=False)
+            self.reset_transactions(confirm=False)
+            self.reset_settings(confirm=False)
+            messagebox.showinfo("Warning", "Reset Successfully!")
 
     # Tạo tính năng reset dữ liệu sách
     def reset_books(self, confirm=True):
-        if confirm:
-            if not messagebox.askyesno("Warning",
-                                       "This action will delete all book's data. Do you want to proceed?"):
-                return
-        self.cursor.execute('DELETE FROM books')
-        self.conn.commit()
-        for item in self.books_tree.get_children():
-            self.books_tree.delete(item)
-        if confirm:
-            messagebox.showinfo("Books Data Reset", "Reset successfully!")
-
-    # Xác nhận reset dữ liệu thành viên
-    def confirm_reset_members(self):
-        if messagebox.askyesno("Warning",
-                               "This action will delete all member's data. Do you want to proceed?"):
-            self.reset_members()
+        if not confirm or messagebox.askyesno("Warning", "This action will delete all book's data. Do you want to proceed?"):
+            self.cursor.execute('DELETE FROM books')
+            self.conn.commit()
+            for item in self.books_tree.get_children():
+                self.books_tree.delete(item)
+            if confirm:
+                messagebox.showinfo("Books Data Reset", "Reset successfully!")
 
     # Tạo tính năng reset dữ liệu thành viên
     def reset_members(self, confirm=True):
-        if confirm:
-            if not messagebox.askyesno("Warning",
-                                       "This action will delete all member's data. Do you want to proceed?"):
-                return
-        self.cursor.execute('DELETE FROM members')
-        self.conn.commit()
-        for item in self.members_tree.get_children():
-            self.members_tree.delete(item)
-        if confirm:
-            messagebox.showinfo("Members Data Reset", "Reset successfully!")
-
-    # Xác nhận reset dữ liệu giao dịch
-    def confirm_reset_transactions(self):
-        if messagebox.askyesno("Warning",
-                               "This action will delete all transaction's data. Do you want to proceed?"):
-            self.reset_transactions()
+        if not confirm or messagebox.askyesno("Warning", "This action will delete all member's data. Do you want to proceed?"):
+            self.cursor.execute('DELETE FROM members')
+            self.conn.commit()
+            for item in self.members_tree.get_children():
+                self.members_tree.delete(item)
+            if confirm:
+                messagebox.showinfo("Members Data Reset", "Reset successfully!")
 
     # Tạo tính năng reset dữ liệu giao dịch
     def reset_transactions(self, confirm=True):
-        if confirm:
-            if not messagebox.askyesno("Warning",
-                                       "This action will delete all transaction's data. Do you want to proceed?"):
-                return
-        self.cursor.execute('DELETE FROM transactions')
-        self.conn.commit()
-        for item in self.transactions_tree.get_children():
-            self.transactions_tree.delete(item)
-        if confirm:
-            messagebox.showinfo("Transactions Data Reset", "Reset successfully!")
-
-    # Xác nhận reset cài đặt
-    def confirm_reset_settings(self):
-        if messagebox.askyesno("Warning", "This action will reset all settings to default. Do you want to proceed?"):
-            self.reset_settings()
+        if not confirm or messagebox.askyesno("Warning", "This action will delete all transaction's data. Do you want to proceed?"):
+            self.cursor.execute('DELETE FROM transactions')
+            self.conn.commit()
+            for item in self.transactions_tree.get_children():
+                self.transactions_tree.delete(item)
+            if confirm:
+                messagebox.showinfo("Transactions Data Reset", "Reset successfully!")
 
     # Tạo tính năng reset cài đặt
     def reset_settings(self, confirm=True):
-        if confirm:
-            if not messagebox.askyesno("Warning", "This action will reset all settings to default. Do you want to proceed?"):
-                return
-        self.bg_color_var.set('#FFFFFF')
-        self.font_size_var.set(10)
-        self.font_style_var.set('TkDefaultFont')
-        self.apply_settings()
-        if confirm:
-            messagebox.showinfo("Settings Reset", "Settings reset successfully!")
+        if not confirm or messagebox.askyesno("Warning", "This action will reset all settings to default. Do you want to proceed?"):
+            self.bg_color_var.set('#FFFFFF')
+            self.font_size_var.set(10)
+            self.font_style_var.set('TkDefaultFont')
+            self.apply_settings()
+            if confirm:
+                messagebox.showinfo("Settings Reset", "Settings reset successfully!")
 
     # Tạo bảng trong cơ sở dữ liệu
     def create_tables(self):
@@ -242,8 +207,7 @@ class LibraryManagementSystem:
         tk.Button(form_frame, text="Add Member", command=self.add_member).grid(row=5, column=0, padx=10, pady=10)
         tk.Button(form_frame, text="Update Member", command=self.update_member).grid(row=5, column=1, padx=10, pady=10)
         tk.Button(form_frame, text="Delete Member", command=self.delete_member).grid(row=6, column=0, padx=10, pady=10)
-        tk.Button(form_frame, text="Clear Fields", command=self.clear_member_fields).grid(row=6, column=1, padx=10,
-                                                                                          pady=10)
+        tk.Button(form_frame, text="Clear Fields", command=self.clear_member_fields).grid(row=6, column=1, padx=10, pady=10)
 
     # Thiết kế tab Transactions
     def create_transaction_form(self, parent):
@@ -264,14 +228,10 @@ class LibraryManagementSystem:
         tk.Label(form_frame, text="Return Date").grid(row=4, column=0, padx=10, pady=5)
         self.return_date_entry = tk.Entry(form_frame)
         self.return_date_entry.grid(row=4, column=1, padx=10, pady=5)
-        tk.Button(form_frame, text="Add Transaction", command=self.add_transaction).grid(row=5, column=0, padx=10,
-                                                                                         pady=10)
-        tk.Button(form_frame, text="Update Transaction", command=self.update_transaction).grid(row=5, column=1, padx=10,
-                                                                                               pady=10)
-        tk.Button(form_frame, text="Delete Transaction", command=self.delete_transaction).grid(row=6, column=0, padx=10,
-                                                                                               pady=10)
-        tk.Button(form_frame, text="Clear Fields", command=self.clear_transaction_fields).grid(row=6, column=1, padx=10,
-                                                                                               pady=10)
+        tk.Button(form_frame, text="Add Transaction", command=self.add_transaction).grid(row=5, column=0, padx=10, pady=10)
+        tk.Button(form_frame, text="Update Transaction", command=self.update_transaction).grid(row=5, column=1, padx=10, pady=10)
+        tk.Button(form_frame, text="Delete Transaction", command=self.delete_transaction).grid(row=6, column=0, padx=10, pady=10)
+        tk.Button(form_frame, text="Clear Fields", command=self.clear_transaction_fields).grid(row=6, column=1, padx=10, pady=10)
 
     # Thiết kế tab Settings
     def create_settings_form(self, parent):
@@ -290,10 +250,10 @@ class LibraryManagementSystem:
         self.font_style_combobox = ttk.Combobox(form_frame, textvariable=self.font_style_var, values=font.families())
         self.font_style_combobox.grid(row=2, column=1, padx=10, pady=5)
         tk.Button(form_frame, text="Apply", command=self.apply_settings).grid(row=3, column=0, columnspan=2, pady=10)
-        tk.Button(form_frame, text="Reset Settings", command=self.confirm_reset_settings).grid(row=4, column=0, columnspan=2, pady=10)
+        tk.Button(form_frame, text="Reset Settings", command=self.reset_settings).grid(row=4, column=0, columnspan=2, pady=10)
 
     # Thiết kế các tính năng cho hệ thống
-    # Màu nền và font chữ
+    # Cài đặt: màu nền và phông chữ
     def choose_bg_color(self):
         color = colorchooser.askcolor()[1]
         if color:
@@ -377,8 +337,7 @@ class LibraryManagementSystem:
         books_borrowed = self.books_borrowed_entry.get()
         quantity_borrowed = self.quantity_borrowed_entry.get()
         if member_id and name and membership_date and books_borrowed and quantity_borrowed:
-            self.members_tree.insert("", "end",
-                                     values=(member_id, name, membership_date, books_borrowed, quantity_borrowed))
+            self.members_tree.insert("", "end", values=(member_id, name, membership_date, books_borrowed, quantity_borrowed))
             self.cursor.execute('INSERT INTO members VALUES (?, ?, ?, ?, ?)',
                                 (member_id, name, membership_date, books_borrowed, quantity_borrowed))
             self.conn.commit()
@@ -395,8 +354,7 @@ class LibraryManagementSystem:
             membership_date = self.membership_date_entry.get()
             books_borrowed = self.books_borrowed_entry.get()
             quantity_borrowed = self.quantity_borrowed_entry.get()
-            self.members_tree.item(selected_item,
-                                   values=(member_id, name, membership_date, books_borrowed, quantity_borrowed))
+            self.members_tree.item(selected_item, values=(member_id, name, membership_date, books_borrowed, quantity_borrowed))
             self.cursor.execute(
                 'UPDATE members SET name = ?, membership_date = ?, books_borrowed = ?, quantity_borrowed = ? WHERE member_id = ?',
                 (name, membership_date, books_borrowed, quantity_borrowed, member_id))
@@ -432,8 +390,7 @@ class LibraryManagementSystem:
         borrow_date = self.borrow_date_entry.get()
         return_date = self.return_date_entry.get()
         if transaction_id and book_id and member_id and borrow_date and return_date:
-            self.transactions_tree.insert("", "end",
-                                          values=(transaction_id, book_id, member_id, borrow_date, return_date))
+            self.transactions_tree.insert("", "end", values=(transaction_id, book_id, member_id, borrow_date, return_date))
             self.cursor.execute('INSERT INTO transactions VALUES (?, ?, ?, ?, ?)',
                                 (transaction_id, book_id, member_id, borrow_date, return_date))
             self.conn.commit()
@@ -450,8 +407,7 @@ class LibraryManagementSystem:
             member_id = self.trans_member_id_entry.get()
             borrow_date = self.borrow_date_entry.get()
             return_date = self.return_date_entry.get()
-            self.transactions_tree.item(selected_item,
-                                        values=(transaction_id, book_id, member_id, borrow_date, return_date))
+            self.transactions_tree.item(selected_item, values=(transaction_id, book_id, member_id, borrow_date, return_date))
             self.cursor.execute(
                 'UPDATE transactions SET book_id = ?, member_id = ?, borrow_date = ?, return_date = ? WHERE transaction_id = ?',
                 (book_id, member_id, borrow_date, return_date, transaction_id))
@@ -510,8 +466,7 @@ class LibraryManagementSystem:
         self.save_format_var = tk.StringVar(value="sqlite")
         formats = ["SQLite", "Excel", "Word", "PDF"]
         for fmt in formats:
-            tk.Radiobutton(self.save_as_window, text=fmt, variable=self.save_format_var, value=fmt.lower()).pack(
-                anchor=tk.W)
+            tk.Radiobutton(self.save_as_window, text=fmt, variable=self.save_format_var, value=fmt.lower()).pack(anchor=tk.W)
         tk.Label(self.save_as_window, text="Select Data to Save").pack(pady=10)
         self.save_books_var = tk.BooleanVar()
         self.save_members_var = tk.BooleanVar()
