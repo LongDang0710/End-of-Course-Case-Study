@@ -36,11 +36,42 @@ class LibraryManagementSystem:
         file_menu.add_command(label="Import", command=self.import_data)
         file_button.config(menu=file_menu)
 
+    # Thao tác trong cơ sở dữ liệu
     def create_notebook(self):
         # Tạo notebook (giao diện tab)
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(pady=10, expand=True)
 
+    # Tạo bảng trong cơ sở dữ liệu
+    def create_tables(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS books (
+                title TEXT PRIMARY KEY,
+                author TEXT,
+                genre TEXT,
+                quantity INTEGER,
+                available INTEGER
+            )
+        ''')
+        self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS members (
+                    member_id TEXT PRIMARY KEY,
+                    name TEXT,
+                    membership_date TEXT,
+                    books_borrowed TEXT,
+                    quantity_borrowed INTEGER
+                )
+            ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS transactions (
+                transaction_id TEXT PRIMARY KEY,
+                book_id TEXT,
+                member_id TEXT,
+                borrow_date TEXT,
+                return_date TEXT
+            )
+        ''')
+        self.conn.commit()
     def create_tabs(self):
         # Setup các tabs
         self.books_tab = ttk.Frame(self.notebook, width=800, height=600)
@@ -143,38 +174,7 @@ class LibraryManagementSystem:
             if confirm:
                 messagebox.showinfo("Settings Reset", "Settings reset successfully!")
 
-    # Tạo bảng trong cơ sở dữ liệu
-    def create_tables(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS books (
-                title TEXT PRIMARY KEY,
-                author TEXT,
-                genre TEXT,
-                quantity INTEGER,
-                available INTEGER
-            )
-        ''')
-        self.cursor.execute('''
-                CREATE TABLE IF NOT EXISTS members (
-                    member_id TEXT PRIMARY KEY,
-                    name TEXT,
-                    membership_date TEXT,
-                    books_borrowed TEXT,
-                    quantity_borrowed INTEGER
-                )
-            ''')
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS transactions (
-                transaction_id TEXT PRIMARY KEY,
-                book_id TEXT,
-                member_id TEXT,
-                borrow_date TEXT,
-                return_date TEXT
-            )
-        ''')
-        self.conn.commit()
-
-    # Tạo TreeView để hiện thị dữ liệu
+    # Tạo TreeView để hiển thị dữ liệu
     def create_tree_view(self, parent, columns):
         tree_frame = tk.Frame(parent)
         tree_frame.pack(pady=20)
