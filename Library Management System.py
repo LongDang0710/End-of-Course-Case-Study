@@ -443,6 +443,7 @@ class LibraryManagementSystem:
         self.name_entry.delete(0, tk.END)
         self.membership_date_entry.delete(0, tk.END)
         self.books_borrowed_entry.delete(0, tk.END)
+        self.quantity_borrowed_entry.delete(0, tk.END)
 
     # Thêm giao dịch
     def add_transaction(self):
